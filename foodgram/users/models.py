@@ -4,20 +4,20 @@ from django.db import models
 
 class MyUser(AbstractUser):
     """Модель для пользователей foodgram"""
-    username = models.CharField(
+    username = models.SlugField(
         verbose_name='Уникальный юзернейм',
         max_length=150,
         unique=True,
     )
     first_name = models.CharField(
-        verbose_name='Имя', max_length=150, blank=True
+        verbose_name='Имя', max_length=150
     )
     last_name = models.CharField(
-        verbose_name='Фамилия', max_length=150, blank=True
+        verbose_name='Фамилия', max_length=150
     )
     email = models.EmailField(
         verbose_name='Адрес электронной почты',
-        max_length=254, blank=True,
+        max_length=254,
         unique=True,
     )
     USERNAME_FIELD = "email"

@@ -3,8 +3,7 @@ from django.http import HttpResponse
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 
 from api1.pagination import CustomPagination
@@ -15,7 +14,7 @@ from api1.serializer import RecipeSerializer, RecipeCreateSerializer, FavoriteSe
 from recipes.models import *
 
 
-class RecipeViewSet(ModelViewSet):
+class RecipeViewSet(viewsets.ModelViewSet):
     """ViewSet для обработки запросов, связанных с рецептами."""
 
     queryset = Recipe.objects.all()
@@ -37,7 +36,7 @@ class RecipeViewSet(ModelViewSet):
             return RecipeCreateSerializer
 
     def to_post_delete(self, pk, model, request):
-        user = request.user
+        user = self.request.user
         recipe = self.get_object()
         if request.methods == 'DELETE':
             obj = model.objects.filter(user=user, recipe=recipe)
@@ -110,13 +109,13 @@ class RecipeViewSet(ModelViewSet):
         return HttpResponse(shopping_list, content_type='text/plain')
 
 
-class TagViewSet(ReadOnlyModelViewSet):
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = (AllowAny,)
 
 
-class IngredientViewSet(ReadOnlyModelViewSet):
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = (AllowAny,)

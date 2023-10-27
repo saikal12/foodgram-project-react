@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import action
 
+from api1.pagination import CustomPagination
 from recipes.models import Follow
 from api1.serializer import FollowSerializer, MyUserCreateSerializer, MyUserSerializer
 
@@ -17,6 +18,7 @@ User = get_user_model()
 
 class MyUserViewSet(UserViewSet):
     serializer_class = MyUserCreateSerializer
+    pagination_class = CustomPagination
 
     @action(
         detail=False,

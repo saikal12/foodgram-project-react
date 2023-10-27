@@ -51,3 +51,7 @@ class IngredientAdmin(ModelAdmin):
 class ShoppingCart(ModelAdmin):
     list_display = ('id', 'user', 'recipe')
     search_fields = ('user', 'recipe')
+
+@register(TagRecipe)
+class TagRecipe(ModelAdmin):
+    list_display = ('pk', 'tag', 'recipe')

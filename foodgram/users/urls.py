@@ -13,5 +13,5 @@ router.register('users', MyUserViewSet, basename='users')
 urlpatterns = [
     url('', include(router.urls)),
     url('', include('djoser.urls')),
-    url('api/auth/', include('djoser.urls.authtoken')),
+    url('auth/', include('djoser.urls.authtoken')),
 ]
