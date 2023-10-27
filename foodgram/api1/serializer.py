@@ -60,7 +60,7 @@ class IngredientSerializer(ModelSerializer):
     """Сериализатор для вывода ингредиента."""
     class Meta:
         model = Ingredient
-        fields = ('id', 'name', 'measurement_unit')
+        fields = '__all__'
 
 
 class IngredientInRecipeCreateSerializer(ModelSerializer):
