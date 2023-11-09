@@ -1,11 +1,13 @@
 from django.db.models import Sum
 from django.http import HttpResponse
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 
+from api1.filters import RecipeFilter
 from api1.pagination import CustomPagination
 from api1.permissions import IsOwnerOrReadOnly
 
@@ -18,6 +20,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     """ViewSet для обработки запросов, связанных с рецептами."""
 
     queryset = Recipe.objects.all()
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilter
     pagination_class = CustomPagination
     permission_classes = (IsOwnerOrReadOnly,)
 
@@ -38,11 +42,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def to_post_delete(self, pk, model, request):
         user = self.request.user
         recipe = self.get_object()
-        if request.methods == 'DELETE':
+        if request.method == 'DELETE':
             obj = model.objects.filter(user=user, recipe=recipe)
             obj.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        if request.methods == 'POST':
+        if request.method == 'POST':
             data = {
                 'user': user.id,
                 'recipe': pk
@@ -57,7 +61,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(
         detail=True,
         methods=('post', 'delete'),
-        permission_classes=('IsAuthenticated',),
+        permission_classes=(IsAuthenticated,),
         url_path='favorite',
         url_name='favorite'
     )
@@ -68,7 +72,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(
         detail=True,
         methods=('post', 'delete'),
-        permission_classes=('IsAuthenticated',),
+        permission_classes=(IsAuthenticated,),
         url_path='shopping_cart',
         url_name='shopping_cart'
     )
@@ -100,7 +104,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Метод для загрузки ингредиентов и их количества
                  для выбранных рецептов"""
         ingredients = IngredientInRecipe.objects.filter(
-            recipe__shopping_recipe__user = request.user
+            recipe__shopping_recipe__user=request.user
         ).values(
             'ingredient__name',
             'ingredient_measurement_unit'
