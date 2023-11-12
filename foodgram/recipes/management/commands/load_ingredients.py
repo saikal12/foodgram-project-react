@@ -14,8 +14,9 @@ class Command(BaseCommand):
     help = 'Загрузка ингредиентов в базу данных'
 
     def handle(self, *args, **kwargs):
+        csv_path = "recipes/management/commands/ingredients.csv"
         with open(
-                f"../data/ingredients.csv", encoding='utf-8'
+                csv_path, encoding='utf-8'
         ) as file:
             reader = csv.reader(file)
             next(reader)

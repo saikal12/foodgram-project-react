@@ -7,6 +7,10 @@ from rest_framework.response import Response
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
+
 from api1.filters import RecipeFilter
 from api1.pagination import CustomPagination
 from api1.permissions import IsOwnerOrReadOnly
@@ -15,6 +19,8 @@ from api1.serializer import RecipeSerializer, RecipeCreateSerializer, FavoriteSe
     ShortRecipeSerializer, ShoppingCartSerializer, TagSerializer, IngredientSerializer
 from recipes.models import *
 
+
+FILE_NAME = "shopping-list.txt"
 
 class RecipeViewSet(viewsets.ModelViewSet):
     """ViewSet для обработки запросов, связанных с рецептами."""
@@ -80,19 +86,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         model = ShoppingCart
         return self.to_post_delete(pk=pk, model=model, request=request)
 
-#подкорректировать
-    @staticmethod
-    def ingredients_to_txt(ingredients):
-        """Метод для объединения ингредиентов в список для загрузки"""
-
-        shopping_list = ''
-        for ingredient in ingredients:
-            shopping_list += (
-                f"{ingredient['ingredient__name']}  - "
-                f"{ingredient['sum']}"
-                f"({ingredient['ingredient__measurement_unit']})\n"
-            )
-        return shopping_list
     @action(
         detail=False,
         methods=('get',),
@@ -104,13 +97,29 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Метод для загрузки ингредиентов и их количества
                  для выбранных рецептов"""
         ingredients = IngredientInRecipe.objects.filter(
-            recipe__shopping_recipe__user=request.user
+            recipe__shopping_cart__user_id=request.user.id
         ).values(
             'ingredient__name',
-            'ingredient_measurement_unit'
+            'ingredient__measurement_unit'
         ).annotate(sum=Sum('amount'))
-        shopping_list = self.ingredients_to_txt(ingredients)
-        return HttpResponse(shopping_list, content_type='text/plain')
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename={FILE_NAME}'
+        pdfmetrics.registerFont(TTFont('DejaVu', 'DejaVuSans.ttf'))
+        c = canvas.Canvas(response)
+        c.setFont('DejaVu', 17)
+        WIDTH = 60
+        HEIGHT = 770
+        c.drawString(WIDTH, HEIGHT, "  Ингредиенты: ")
+        for new_string in ingredients:
+            HEIGHT -= 30
+            name = new_string['ingredient__name']
+            measurement_unit = new_string['ingredient__measurement_unit']
+            amount = new_string['sum']
+            string = f'{name}  -  {amount}({measurement_unit})'
+            c.drawString(WIDTH, HEIGHT, string)
+        c.showPage()
+        c.save()
+        return response
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
