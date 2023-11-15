@@ -80,7 +80,7 @@ class Recipe(models.Model):
     )
     image = models.ImageField(
         verbose_name='Фотография рецепта',
-        upload_to='recipes_images'
+        upload_to='recipes_images/'
     )
     cooking_time = models.PositiveSmallIntegerField(
         validators=[
