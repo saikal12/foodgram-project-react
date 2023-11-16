@@ -2,14 +2,15 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from djoser import serializers
 from djoser.views import UserViewSet
-from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
 
 from api1.pagination import CustomPagination
+from api1.serializer import (FollowCreateSerializer, FollowSerializer,
+                             MyUserSerializer)
 from recipes.models import Follow
-from api1.serializer import FollowSerializer, MyUserCreateSerializer, MyUserSerializer, FollowCreateSerializer
 
 # Create your views here.
 

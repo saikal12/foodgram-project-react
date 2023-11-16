@@ -10,14 +10,14 @@ services:
     image: saikal12/foodgram_backend
     env_file: ../.env
     volumes:
-      - static:/backend_static/
-      - media:/app/media/
+      - static:/backend_static
+      - media:/app/media
+    depends_on:
+      - db
 
   db:
     image: postgres:13.10
-
     env_file: ../.env
-
     volumes:
       - foodgram_pg_data:/var/lib/postgresql/data
 
@@ -26,11 +26,15 @@ services:
   frontend:
     image: saikal12/foodgram_frontend
     volumes:
-      - ../frontend/:/app/result_build/
+      - static:/frontend_static
   nginx:
     image: saikal12/foodgram_gateway
     ports:
-      - "9090:80"
+      - 9090:80
     volumes:
-      - static:/var/html/static/
-      - media:/media/
+      - static:/static/
+      - media:/var/html/media/
+
+    depends_on:
+      - backend
+

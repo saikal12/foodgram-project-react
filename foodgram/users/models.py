@@ -32,5 +32,3 @@ class MyUser(AbstractUser):
             """Строковое представление модели"""
 
             return self.username
-
-

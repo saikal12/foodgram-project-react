@@ -28,13 +28,13 @@ services:
   frontend:
     build: ../frontend/
     volumes:
-      - static:/app/result_build/
+      - static:/frontend_static
   nginx:
-    image: saikal12/gateway
+    build: ../nginx/
     ports:
       - "9090:80"
     volumes:
-      - static:/var/html/static/
+      - static:/static/
       - media:/var/html/media/
 
     depends_on:

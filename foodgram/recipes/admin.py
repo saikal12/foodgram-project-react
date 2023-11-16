@@ -1,7 +1,8 @@
 
 from django.contrib.admin import ModelAdmin, register
 
-from .models import *
+from .models import (Favorite, Follow, Ingredient, IngredientInRecipe, Recipe,
+                     ShoppingCart, Tag, TagRecipe)
 
 
 @register(Recipe)
@@ -51,6 +52,7 @@ class IngredientAdmin(ModelAdmin):
 class ShoppingCart(ModelAdmin):
     list_display = ('id', 'user', 'recipe')
     search_fields = ('user', 'recipe')
+
 
 @register(TagRecipe)
 class TagRecipe(ModelAdmin):
