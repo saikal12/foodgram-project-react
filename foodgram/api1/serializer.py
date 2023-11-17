@@ -83,6 +83,7 @@ class IngredientInRecipeSerializer(ModelSerializer):
 
 
 class RecipeSerializer(ModelSerializer):
+    """Сериализатор для вывода рецепта."""
     image = Base64ImageField()
     tags = TagSerializer(many=True)
     ingredients = IngredientInRecipeSerializer(

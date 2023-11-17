@@ -45,6 +45,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeCreateSerializer
 
     def to_post_delete(self, pk, model, request):
+        """Метод для вызова удаления или публикации. """
         user = self.request.user
         recipe = self.get_object()
         if request.method == 'DELETE':
@@ -121,12 +122,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
+    """ViewSet для обработки запросов, связанных с тегом."""
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = (AllowAny,)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
+    """ViewSet для обработки запросов, связанных с ингредиентами."""
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = (AllowAny,)
