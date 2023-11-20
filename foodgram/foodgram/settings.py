@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'djoser',
     'users.apps.UsersConfig',
     'recipes.apps.RecipesConfig',
-    'api1.apps.Api1Config',
+    'api.apps.ApiConfig',
 ]
 
 MIDDLEWARE = [
@@ -167,3 +167,5 @@ CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000'
 ]
 CSV_FILES_DIR = os.path.join(BASE_DIR, 'data')
+
+PAGE_SIZE = 6

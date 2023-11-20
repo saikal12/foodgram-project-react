@@ -1,6 +1,6 @@
-from api1.pagination import CustomPagination
-from api1.serializer import (FollowCreateSerializer, FollowSerializer,
-                             MyUserSerializer)
+from api.pagination import CustomPagination
+from api.serializer import (FollowCreateSerializer, FollowSerializer,
+                            MyUserSerializer)
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from djoser import serializers

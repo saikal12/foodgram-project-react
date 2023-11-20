@@ -1,11 +1,11 @@
-from api1.filters import IngredientFilter, RecipeFilter
-from api1.pagination import CustomPagination
-from api1.permissions import IsOwnerOrReadOnly
-from api1.serializer import (FavoriteSerializer, IngredientSerializer,
-                             RecipeCreateSerializer, RecipeSerializer,
-                             ShoppingCartSerializer, ShortRecipeSerializer,
-                             TagSerializer)
-from django.db.models import Sum
+from api.filters import IngredientFilter, RecipeFilter
+from api.pagination import CustomPagination
+from api.permissions import IsOwnerOrReadOnly
+from api.serializer import (FavoriteSerializer, IngredientSerializer,
+                            RecipeCreateSerializer, RecipeReadSerializer,
+                            ShoppingCartSerializer, ShortRecipeSerializer,
+                            TagSerializer)
+from django.db.models import Sum, Exists, OuterRef
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
@@ -24,7 +24,19 @@ FILE_NAME = "shopping-list.txt"
 class RecipeViewSet(viewsets.ModelViewSet):
     """ViewSet для обработки запросов, связанных с рецептами."""
 
-    queryset = Recipe.objects.all()
+    queryset = Recipe.objects.all().annotate(
+        is_favorited=Exists(
+            Favorite.objects.filter(
+                user_id=OuterRef('request.user.id'),
+                recipe_id=OuterRef('id'))
+        ),
+        is_in_shopping_cart=Exists(
+            ShoppingCart.object.filter(
+                user_id=OuterRef('request.user.id'),
+                recipe_id=OuterRef('id')
+            )
+        )
+    )
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     pagination_class = CustomPagination
@@ -36,7 +48,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         """Метод для вызова определенного сериализатора. """
         if self.action in ('list', 'retrieve'):
-            return RecipeSerializer
+            return RecipeReadSerializer
         if self.action == 'favorite':
             return FavoriteSerializer
         if self.action == 'shopping_cart':
