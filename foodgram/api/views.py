@@ -1,24 +1,20 @@
-from api.filters import IngredientFilter, RecipeFilter
-from api.pagination import CustomPagination
-from api.permissions import IsOwnerOrReadOnly
-from api.serializer import (FavoriteSerializer, IngredientSerializer,
-                            RecipeCreateSerializer, RecipeReadSerializer,
-                            ShoppingCartSerializer, ShortRecipeSerializer,
-                            TagSerializer)
 from django.db.models import Sum, Exists, OuterRef
-from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
-                            ShoppingCart, Tag)
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfgen import canvas
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-FILE_NAME = "shopping-list.txt"
+from api.filters import IngredientFilter, RecipeFilter
+from api.pagination import CustomPagination
+from api.permissions import IsOwnerOrReadOnly
+from api.serializer import (FavoriteSerializer, IngredientSerializer,
+                            RecipeCreateSerializer, RecipeReadSerializer,
+                            ShoppingCartSerializer, TagSerializer)
+from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
+                            ShoppingCart, Tag)
+from .utils import to_pdf
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -49,31 +45,30 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Метод для вызова определенного сериализатора. """
         if self.action in ('list', 'retrieve'):
             return RecipeReadSerializer
-        if self.action == 'favorite':
-            return FavoriteSerializer
-        if self.action == 'shopping_cart':
-            return ShoppingCartSerializer
-        elif self.action in ('create', 'partial_update'):
-            return RecipeCreateSerializer
+        return RecipeCreateSerializer
 
-    def to_post_delete(self, pk, model, request):
-        """Метод для вызова удаления или публикации. """
+    def to_post(self, serializer, request, pk):
+        """Метод для добавления."""
         user = self.request.user
-        recipe = self.get_object()
+        data = {
+            'user': user.id,
+            'recipe': pk
+        }
+        favorite = serializer(data=data)
+        favorite.is_valid(raise_exception=True)
+        favorite.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def to_delete(self, request, model, pk):
+        """Метод для удаления."""
+        user = self.request.user
+        recipe = get_object_or_404(Recipe, id=pk)
         if request.method == 'DELETE':
             obj = model.objects.filter(user=user, recipe=recipe)
-            obj.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        if request.method == 'POST':
-            data = {
-                'user': user.id,
-                'recipe': pk
-            }
-            favorite = self.get_serializer(data=data)
-            favorite.is_valid(raise_exception=True)
-            favorite.save()
-            serializer = ShortRecipeSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            delete = obj.delete()
+            if delete[0] > 0:
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
     @action(
         detail=True,
@@ -84,7 +79,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def favorite(self, request, pk):
         model = Favorite
-        return self.to_post_delete(pk=pk, model=model, request=request)
+        if request.method == 'POST':
+            return self.to_post(
+                pk=pk, serializer=FavoriteSerializer,
+                request=request
+            )
+        return self.to_delete(pk=pk, model=model, request=request)
 
     @action(
         detail=True,
@@ -95,7 +95,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def shopping_cart(self, request, pk):
         model = ShoppingCart
-        return self.to_post_delete(pk=pk, model=model, request=request)
+        if request.method == 'POST':
+            return self.to_post(
+                pk=pk, serializer=ShoppingCartSerializer,
+                request=request
+            )
+        return self.to_delete(pk=pk, model=model, request=request)
 
     @action(
         detail=False,
@@ -112,24 +117,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         ).values(
             'ingredient__name',
             'ingredient__measurement_unit'
-        ).annotate(sum=Sum('amount'))
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename={FILE_NAME}'
-        pdfmetrics.registerFont(TTFont('DejaVu', 'DejaVuSans.ttf'))
-        c = canvas.Canvas(response)
-        c.setFont('DejaVu', 17)
-        WIDTH = 60
-        HEIGHT = 770
-        c.drawString(WIDTH, HEIGHT, "  Ингредиенты: ")
-        for new_string in ingredients:
-            HEIGHT -= 30
-            name = new_string['ingredient__name']
-            measurement_unit = new_string['ingredient__measurement_unit']
-            amount = new_string['sum']
-            string = f'{name}  -  {amount}({measurement_unit})'
-            c.drawString(WIDTH, HEIGHT, string)
-        c.showPage()
-        c.save()
+        ).annotate(sum=Sum('amount')
+                   .order_by('ingredient__name'))
+        response = to_pdf(ingredients)
         return response
 
 

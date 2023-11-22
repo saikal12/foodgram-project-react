@@ -1,9 +1,10 @@
 import csv
 
 from django.core.management.base import BaseCommand
+
 from recipes.models import Ingredient
 
-# python3 manage.py utils - команда для загрузки ингредиентов
+# python3 manage.py load_ingredients - команда для загрузки ингредиентов
 
 
 class Command(BaseCommand):

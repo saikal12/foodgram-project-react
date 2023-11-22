@@ -1,31 +1,33 @@
-from api.pagination import CustomPagination
-from api.serializer import (FollowCreateSerializer, FollowSerializer,
-                            MyUserSerializer)
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from djoser import serializers
 from djoser.views import UserViewSet
-from recipes.models import Follow
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-# Create your views here.
-
+from api.pagination import CustomPagination
+from api.serializer import (FollowCreateSerializer, FollowSerializer,
+                            UserSerializer)
+from users.models import Follow
 
 User = get_user_model()
 
 
-class MyUserViewSet(UserViewSet):
+class UserViewSet(UserViewSet):
     queryset = User.objects.all()
-    serializer_class = MyUserSerializer
+    serializer_class = UserSerializer
     pagination_class = CustomPagination
+
+    def get_permissions(self):
+        if self.action == 'me':
+            self.permission_classes = (IsAuthenticated,)
+        return super().get_permissions
 
     @action(
         detail=False,
         methods=['get'],
-        permission_classes=(AllowAny,)
+        permission_classes=(IsAuthenticated,)
     )
     def subscriptions(self, request):
         user = request.user
@@ -39,7 +41,7 @@ class MyUserViewSet(UserViewSet):
     @action(
         detail=True,
         methods=['post', 'delete'],
-        permission_classes=(AllowAny,)
+        permission_classes=(IsAuthenticated,)
     )
     def subscribe(self, request, id):
         user = request.user
@@ -55,14 +57,7 @@ class MyUserViewSet(UserViewSet):
             serializer = self.get_serializer(author)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
-            obj = get_object_or_404(Follow, user=user, author=author)
-            if not obj:
-                raise serializers.ValidationError(
-                    {
-                        'errors': [
-                            'Вы не подписаны на этого автора.'
-                        ]
-                    }
-                )
-            obj.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            obj = Follow.objects.filter(user=user, author=author).delete()
+            if obj[0] > 0:
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
