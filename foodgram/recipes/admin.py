@@ -1,8 +1,8 @@
 
 from django.contrib.admin import ModelAdmin, register
 
-from .models import (Favorite, Follow, Ingredient, IngredientInRecipe, Recipe,
-                     ShoppingCart, Tag, TagRecipe)
+from .models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
+                     ShoppingCart, Tag)
 
 
 @register(Recipe)
@@ -30,13 +30,6 @@ class FavoriteAdmin(ModelAdmin):
     list_display = ('id', 'user', 'recipe')
 
 
-@register(Follow)
-class FollowAdmin(ModelAdmin):
-    list_display = ('id', 'user', 'author')
-    search_fields = ('user', 'author')
-    list_filter = ('user', 'author')
-
-
 @register(IngredientInRecipe)
 class IngredientInRecipeAdmin(ModelAdmin):
     list_display = ('id', 'ingredient', 'recipe', 'amount')
@@ -53,7 +46,3 @@ class ShoppingCart(ModelAdmin):
     list_display = ('id', 'user', 'recipe')
     search_fields = ('user', 'recipe')
 
-
-@register(TagRecipe)
-class TagRecipe(ModelAdmin):
-    list_display = ('pk', 'tag', 'recipe')

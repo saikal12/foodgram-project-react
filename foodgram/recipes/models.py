@@ -4,10 +4,10 @@ from django.core.validators import (
 )
 from django.db import models
 
-from foodgram.foodgram.settings import (
+from foodgram.settings import (
     NAME_MAX_LENGTH, SLUG_MAX_LENGTH, COLOR_MAX_LENGTH
 )
-from recipes.utils import BaseModel
+
 
 User = get_user_model()
 
@@ -93,13 +93,12 @@ class Recipe(models.Model):
     cooking_time = models.PositiveSmallIntegerField(
         validators=[
             MinValueValidator(1, message='Минимальное значение 1 минута!'),
-            MaxValueValidator()
+            MaxValueValidator(32767, message='Максимальное значение 32767 минут!')
         ],
         verbose_name='Время приготовления (в минутах)'
     )
     tags = models.ManyToManyField(
         Tag,
-        through='TagRecipe',
         related_name='recipes',
         verbose_name='Теги'
     )
@@ -111,7 +110,7 @@ class Recipe(models.Model):
     )
 
     class Meta:
-        ordering = ('name', 'tags')
+        ordering = ('name',)
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
 
@@ -136,7 +135,7 @@ class IngredientInRecipe(models.Model):
     amount = models.PositiveSmallIntegerField(
         validators=[
             MinValueValidator(1, message='Минимальное количество 1!'),
-            MaxValueValidator()
+            MaxValueValidator(32767, message='Максимальное значение 32767 минут!')
         ],
         verbose_name='Количество ингредиента'
     )
@@ -155,7 +154,24 @@ class IngredientInRecipe(models.Model):
         return f'{self.ingredient} {self.recipe}'
 
 
-class Favorite(models.Model):
+class BaseModel(models.Model):
+    """Абстрактная модель"""
+
+    user = models.ForeignKey(
+        User,
+        verbose_name='Пользователь',
+        related_name='%(class)s',
+        on_delete=models.CASCADE,
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        verbose_name='Рецепт',
+        related_name='%(class)s',
+        on_delete=models.CASCADE,
+    )
+
+
+class Favorite(BaseModel):
     """Модель для избранных рецептов"""
     class Meta:
         verbose_name = 'Избранное'

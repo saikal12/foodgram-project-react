@@ -23,13 +23,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all().annotate(
         is_favorited=Exists(
             Favorite.objects.filter(
-                user_id=OuterRef('request.user.id'),
-                recipe_id=OuterRef('id'))
+                user_id=OuterRef('author_id'),
+                id=OuterRef('id'))
         ),
         is_in_shopping_cart=Exists(
-            ShoppingCart.object.filter(
-                user_id=OuterRef('request.user.id'),
-                recipe_id=OuterRef('id')
+            ShoppingCart.objects.filter(
+                user_id=OuterRef('author_id'),
+                id=OuterRef('id')
             )
         )
     )
