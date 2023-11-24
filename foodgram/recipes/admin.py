@@ -45,4 +45,3 @@ class IngredientAdmin(ModelAdmin):
 class ShoppingCart(ModelAdmin):
     list_display = ('id', 'user', 'recipe')
     search_fields = ('user', 'recipe')
-
