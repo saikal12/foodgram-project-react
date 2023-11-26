@@ -1,8 +1,8 @@
-from api.views import IngredientViewSet, RecipeViewSet, TagViewSet
+from foodgram.api.views import IngredientViewSet, RecipeViewSet, TagViewSet
 from django.urls import include, path
 from rest_framework import routers
 
-from users.views import UserViewSet
+from foodgram.users.views import UserViewSet
 
 
 app_name = 'api'

@@ -6,14 +6,14 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from api.filters import IngredientFilter, RecipeFilter
-from api.pagination import CustomPagination
-from api.permissions import IsOwnerOrReadOnly
-from api.serializer import (FavoriteSerializer, IngredientSerializer,
-                            RecipeCreateSerializer, RecipeReadSerializer,
-                            ShoppingCartSerializer, TagSerializer)
-from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
-                            ShoppingCart, Tag)
+from foodgram.api.filters import IngredientFilter, RecipeFilter
+from foodgram.api.pagination import CustomPagination
+from foodgram.api.permissions import IsOwnerOrReadOnly
+from foodgram.api.serializer import (FavoriteSerializer, IngredientSerializer,
+                                     RecipeCreateSerializer, RecipeReadSerializer,
+                                     ShoppingCartSerializer, TagSerializer)
+from foodgram.recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
+                                     ShoppingCart, Tag)
 from .utils import to_pdf
 
 

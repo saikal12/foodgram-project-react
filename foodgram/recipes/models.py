@@ -4,7 +4,7 @@ from django.core.validators import (
 )
 from django.db import models
 
-from foodgram.settings import (
+from foodgram.foodgram.settings import (
     NAME_MAX_LENGTH, SLUG_MAX_LENGTH, COLOR_MAX_LENGTH
 )
 

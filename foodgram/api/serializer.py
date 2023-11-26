@@ -8,9 +8,9 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import ModelSerializer
 from rest_framework.validators import UniqueTogetherValidator
 
-from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
-                            ShoppingCart, Tag)
-from users.models import Follow, User
+from foodgram.recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
+                                     ShoppingCart, Tag)
+from foodgram.users.models import Follow, User
 
 
 class Base64ImageField(serializers.ImageField):
