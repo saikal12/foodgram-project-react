@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import FilterSet, filters
 
-from foodgram.recipes.models import Ingredient, Recipe, Tag
+from recipes.models import Ingredient, Recipe, Tag
 
 User = get_user_model()
 
@@ -37,5 +37,5 @@ class RecipeFilter(FilterSet):
     def filter_is_in_shopping_cart(self, queryset, name, value):
         user = self.request.user
         if value and not user.is_anonymous:
-            return queryset.filter(shoppingcart__user=user)
+            return queryset.filter(shoppingcarts__user=user)
         return queryset

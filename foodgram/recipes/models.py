@@ -1,15 +1,12 @@
-from django.contrib.auth import get_user_model
 from django.core.validators import (
     MinValueValidator, RegexValidator, MaxValueValidator
 )
 from django.db import models
 
-from foodgram.foodgram.settings import (
+from foodgram.settings import (
     NAME_MAX_LENGTH, SLUG_MAX_LENGTH, COLOR_MAX_LENGTH
 )
-
-
-User = get_user_model()
+from users.models import User
 
 
 class Ingredient(models.Model):
@@ -181,6 +178,9 @@ class BaseModel(models.Model):
         related_name='%(class)s',
         on_delete=models.CASCADE,
     )
+
+    class Meta:
+        abstract = True
 
 
 class Favorite(BaseModel):

@@ -6,10 +6,10 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from foodgram.api.pagination import CustomPagination
-from foodgram.api.serializer import (FollowCreateSerializer, FollowSerializer,
-                                     UserSerializer)
-from foodgram.users.models import Follow
+from api.pagination import CustomPagination
+from api.serializer import (FollowCreateSerializer, FollowSerializer,
+                            UserSerializer)
+from users.models import Follow
 
 User = get_user_model()
 
@@ -21,8 +21,8 @@ class UserViewSet(UserViewSet):
 
     def get_permissions(self):
         if self.action == 'me':
-            self.permission_classes = (IsAuthenticated,)
-        return super().get_permissions
+            return [IsAuthenticated()]
+        return super().get_permissions()
 
     @action(
         detail=False,

@@ -8,9 +8,9 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import ModelSerializer
 from rest_framework.validators import UniqueTogetherValidator
 
-from foodgram.recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
-                                     ShoppingCart, Tag)
-from foodgram.users.models import Follow, User
+from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
+                            ShoppingCart, Tag)
+from users.models import Follow, User
 
 
 class Base64ImageField(serializers.ImageField):
@@ -33,7 +33,7 @@ class UserSerializer(UserCreateSerializer):
                   'last_name', 'is_subscribed')
 
     def get_is_subscribed(self, author):
-        request = self.context('request')
+        request = self.context['request']
         if request and request.user.is_authenticated:
             return Follow.objects.filter(
                 user=request.user, author=author
@@ -94,10 +94,10 @@ class RecipeReadSerializer(ModelSerializer):
     class Meta:
         model = Recipe
         fields = (
-            'id', 'author', 'name', 'text', 'image',
+            'id', 'text', 'image',
             'cooking_time', 'tags', 'ingredients',
-            'is_in_shopping_cart', 'is_favorited'
-
+            'is_in_shopping_cart', 'is_favorited', 'name',
+            'author'
         )
 
 
@@ -112,7 +112,6 @@ class RecipeCreateSerializer(ModelSerializer):
     class Meta:
         model = Recipe
         fields = (
-            'author',
             'ingredients',
             'tags',
             'image',
@@ -122,8 +121,8 @@ class RecipeCreateSerializer(ModelSerializer):
         )
 
     def validate(self, data):
-        ingredients = self.data.get('ingredients')
-        tags = self.data.get('tags')
+        ingredients = self.initial_data.get('ingredients')
+        tags = self.initial_data.get('tags')
         if not ingredients:
             raise ValidationError({
                 'ingredients': 'Нужен хотя бы один ингредиент!'
@@ -147,12 +146,12 @@ class RecipeCreateSerializer(ModelSerializer):
             })
         return data
 
-    def validate_image(self, data):
-        image = self.data.get('image')
-        if not image:
-            raise ValidationError({
+    def validate_image(self, value):
+        if not value:
+            raise ValidationError(
                 'Поле "image" должно быть заполнено'
-            })
+            )
+        return value
 
     @staticmethod
     def create_update_ingredients(ingredient_data, recipe):
@@ -160,7 +159,7 @@ class RecipeCreateSerializer(ModelSerializer):
         for ingredient in ingredient_data:
             ingredient_obj = ingredient.get('id')
             amount_data = ingredient.get('amount')
-            new_ingredient = IngredientInRecipe.objects.create(
+            new_ingredient = IngredientInRecipe(
                 recipe=recipe, ingredient=ingredient_obj, amount=amount_data
             )
             ingredient_create.append(new_ingredient)
@@ -174,9 +173,8 @@ class RecipeCreateSerializer(ModelSerializer):
     def create(self, validated_data):
         ingredient_data = validated_data.pop('ingredients')
         tags_data = validated_data.pop('tags')
-        recipe = Recipe.objects.create(
-            author=validated_data['author'], **validated_data
-        )
+        author = validated_data.pop('author')
+        recipe = Recipe.objects.create(author=author, **validated_data)
         self.create_update_ingredients(ingredient_data, recipe)
         self.create_update_tags(tags_data, recipe)
 
@@ -216,6 +214,7 @@ class FavoriteSerializer(ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['recipe'] = ShortRecipeSerializer(instance.recipe).data
+        return data
 
 
 class ShoppingCartSerializer(ModelSerializer):
@@ -236,6 +235,7 @@ class ShoppingCartSerializer(ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['recipe'] = ShortRecipeSerializer(instance.recipe).data
+        return data
 
 
 class ShortRecipeSerializer(ModelSerializer):
