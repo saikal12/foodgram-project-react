@@ -6,7 +6,7 @@ from reportlab.pdfgen import canvas
 FILE_NAME = 'shopping-list.txt'
 
 
-def to_pdf(self, ingredients):
+def to_pdf(ingredients):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename={FILE_NAME}'
     pdfmetrics.registerFont(TTFont('DejaVu', 'DejaVuSans.ttf'))

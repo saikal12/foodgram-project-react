@@ -18,7 +18,6 @@ class Command(BaseCommand):
                 csv_path, encoding='utf-8'
         ) as file:
             reader = csv.reader(file)
-            next(reader)
             tags = [
                 Tag(
                     name=row[0],

@@ -88,8 +88,12 @@ class RecipeReadSerializer(ModelSerializer):
         source='ingredient_list', many=True
     )
     author = UserSerializer(read_only=True)
-    is_in_shopping_cart = serializers.BooleanField(default=False, read_only=True)
-    is_favorited = serializers.BooleanField(default=False, read_only=True)
+    is_in_shopping_cart = serializers.BooleanField(
+        default=False, read_only=True
+    )
+    is_favorited = serializers.BooleanField(
+        default=False, read_only=True
+    )
 
     class Meta:
         model = Recipe
@@ -237,9 +241,10 @@ class ShoppingCartSerializer(ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['recipe'] = ShortRecipeSerializer(instance.recipe).data
+        data['recipe'] = ShortRecipeSerializer(
+            instance.recipe
+        ).data
         return data
-
 
 
 class ShortRecipeSerializer(ModelSerializer):

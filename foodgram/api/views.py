@@ -122,10 +122,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         ).values(
             'ingredient__name',
             'ingredient__measurement_unit'
-        ).annotate(sum=Sum('amount')).
-                       order_by('ingredient__name'))
+        ).annotate(sum=Sum('amount')).order_by(
+            'ingredient__name'
+        ))
         return to_pdf(ingredients=ingredients)
-
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
