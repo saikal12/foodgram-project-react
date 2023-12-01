@@ -19,27 +19,32 @@ from .utils import to_pdf
 
 class RecipeViewSet(viewsets.ModelViewSet):
     """ViewSet для обработки запросов, связанных с рецептами."""
-
-    queryset = Recipe.objects.all().annotate(
-        is_favorited=Exists(
-            Favorite.objects.filter(
-                user_id=OuterRef('author_id'),
-                recipe_id=OuterRef('id'))
-        ),
-        is_in_shopping_cart=Exists(
-            ShoppingCart.objects.filter(
-                user_id=OuterRef('author_id'),
-                recipe_id=OuterRef('id')
-            )
-        )
-    )
+    queryset = Recipe.objects.all()
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     pagination_class = CustomPagination
     permission_classes = (IsOwnerOrReadOnly,)
 
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+
+        if user.is_authenticated:
+            queryset = queryset.annotate(
+                is_favorited=Exists(
+                    Favorite.objects.filter(
+                        user=user,
+                        recipe_id=OuterRef('id'))
+                ),
+                is_in_shopping_cart=Exists(
+                    ShoppingCart.objects.filter(
+                        user=user,
+                        recipe_id=OuterRef('id')
+                    )
+                )
+            )
+            return queryset
+        return queryset
 
     def get_serializer_class(self):
         """Метод для вызова определенного сериализатора. """
@@ -49,7 +54,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def to_post(self, serializer, request, pk):
         """Метод для добавления."""
-        user = self.request.user
+        user = request.user
         data = {
             'user': user.id,
             'recipe': pk
@@ -57,11 +62,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
         favorite = serializer(data=data)
         favorite.is_valid(raise_exception=True)
         favorite.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(favorite.data, status=status.HTTP_201_CREATED)
 
     def to_delete(self, request, model, pk):
         """Метод для удаления."""
-        user = self.request.user
+        user = request.user
         recipe = get_object_or_404(Recipe, id=pk)
         if request.method == 'DELETE':
             obj = model.objects.filter(user=user, recipe=recipe)
@@ -112,15 +117,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def download_shopping_cart(self, request):
         """Метод для загрузки ингредиентов и их количества
                  для выбранных рецептов"""
-        ingredients = IngredientInRecipe.objects.filter(
-            recipe__shopping_cart__user_id=request.user.id
+        ingredients = (IngredientInRecipe.objects.filter(
+            recipe__shoppingcart__user_id=request.user.id
         ).values(
             'ingredient__name',
             'ingredient__measurement_unit'
-        ).annotate(sum=Sum('amount')
-                   .order_by('ingredient__name'))
-        response = to_pdf(ingredients)
-        return response
+        ).annotate(sum=Sum('amount')).
+                       order_by('ingredient__name'))
+        return to_pdf(ingredients=ingredients)
+
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):

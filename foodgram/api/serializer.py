@@ -88,8 +88,8 @@ class RecipeReadSerializer(ModelSerializer):
         source='ingredient_list', many=True
     )
     author = UserSerializer(read_only=True)
-    is_in_shopping_cart = serializers.BooleanField(read_only=True)
-    is_favorited = serializers.BooleanField(read_only=True)
+    is_in_shopping_cart = serializers.BooleanField(default=False, read_only=True)
+    is_favorited = serializers.BooleanField(default=False, read_only=True)
 
     class Meta:
         model = Recipe
@@ -121,8 +121,8 @@ class RecipeCreateSerializer(ModelSerializer):
         )
 
     def validate(self, data):
-        ingredients = self.initial_data.get('ingredients')
-        tags = self.initial_data.get('tags')
+        ingredients = data.get('ingredients')
+        tags = data.get('tags')
         if not ingredients:
             raise ValidationError({
                 'ingredients': 'Нужен хотя бы один ингредиент!'
@@ -173,8 +173,11 @@ class RecipeCreateSerializer(ModelSerializer):
     def create(self, validated_data):
         ingredient_data = validated_data.pop('ingredients')
         tags_data = validated_data.pop('tags')
-        author = validated_data.pop('author')
-        recipe = Recipe.objects.create(author=author, **validated_data)
+        request = self.context.get('request')
+        author = request.user
+        recipe = Recipe.objects.create(
+            author=author, **validated_data
+        )
         self.create_update_ingredients(ingredient_data, recipe)
         self.create_update_tags(tags_data, recipe)
 
@@ -236,6 +239,7 @@ class ShoppingCartSerializer(ModelSerializer):
         data = super().to_representation(instance)
         data['recipe'] = ShortRecipeSerializer(instance.recipe).data
         return data
+
 
 
 class ShortRecipeSerializer(ModelSerializer):
