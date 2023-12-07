@@ -34,11 +34,12 @@ class UserSerializer(UserCreateSerializer):
 
     def get_is_subscribed(self, author):
         request = self.context['request']
-        if request and request.user.is_authenticated:
-            return Follow.objects.filter(
-                user=request.user, author=author
-            ).exists()
-        return False
+        return (
+                request and
+                request.user.is_authenticated and
+                Follow.objects.filter(
+                    user=request.user, author=author
+                ).exists())
 
 
 class TagSerializer(ModelSerializer):
@@ -135,10 +136,10 @@ class RecipeCreateSerializer(ModelSerializer):
         for ingredient in ingredients:
             ingredient_id = ingredient.get('id')
             ingredient_list.append(ingredient_id)
-            if len(ingredients) != len(set(ingredient_list)):
-                raise ValidationError({
-                    'ingredients': 'Ингридиенты не должны повторяться!'
-                })
+        if len(ingredients) != len(set(ingredient_list)):
+            raise ValidationError({
+                'ingredients': 'Ингридиенты не должны повторяться!'
+            })
         if not tags:
             raise ValidationError({
                 'tags': 'Нужен хотя бы один тег!'
@@ -169,10 +170,6 @@ class RecipeCreateSerializer(ModelSerializer):
             ingredient_create.append(new_ingredient)
             IngredientInRecipe.objects.bulk_create(ingredient_create)
 
-    @staticmethod
-    def create_update_tags(tags_data, recipe):
-        recipe.tags.set(tags_data)
-
     @transaction.atomic
     def create(self, validated_data):
         ingredient_data = validated_data.pop('ingredients')
@@ -183,8 +180,7 @@ class RecipeCreateSerializer(ModelSerializer):
             author=author, **validated_data
         )
         self.create_update_ingredients(ingredient_data, recipe)
-        self.create_update_tags(tags_data, recipe)
-
+        recipe.tags.set(tags_data)
         return recipe
 
     @transaction.atomic
@@ -192,9 +188,8 @@ class RecipeCreateSerializer(ModelSerializer):
         ingredient_data = validated_data.pop('ingredients')
         tags_data = validated_data.pop('tags')
         instance.ingredients.clear()
-        instance.tags.clear()
+        instance.tags.set(tags_data)
         self.create_update_ingredients(ingredient_data, instance)
-        self.create_update_tags(tags_data, instance)
         return super().update(instance, validated_data)
 
     def to_representation(self, instance):
@@ -219,9 +214,7 @@ class FavoriteSerializer(ModelSerializer):
         ]
 
     def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data['recipe'] = ShortRecipeSerializer(instance.recipe).data
-        return data
+        return ShortRecipeSerializer(instance.recipe).data
 
 
 class ShoppingCartSerializer(ModelSerializer):
@@ -240,11 +233,7 @@ class ShoppingCartSerializer(ModelSerializer):
         ]
 
     def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data['recipe'] = ShortRecipeSerializer(
-            instance.recipe
-        ).data
-        return data
+        return ShortRecipeSerializer(instance.recipe).data
 
 
 class ShortRecipeSerializer(ModelSerializer):
@@ -275,7 +264,7 @@ class FollowSerializer(UserSerializer):
         return ShortRecipeSerializer(recipes, many=True).data
 
     def get_recipes_count(self, obj):
-        return Recipe.objects.filter(author__id=obj.id).count()
+        return obj.recipes.count()
 
 
 class FollowCreateSerializer(ModelSerializer):

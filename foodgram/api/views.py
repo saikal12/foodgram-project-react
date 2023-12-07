@@ -1,5 +1,7 @@
+from django.contrib.auth import get_user_model
 from django.db.models import Sum, Exists, OuterRef
 from django.shortcuts import get_object_or_404
+from djoser.views import UserViewSet
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -9,12 +11,20 @@ from rest_framework.response import Response
 from api.filters import IngredientFilter, RecipeFilter
 from api.pagination import CustomPagination
 from api.permissions import IsOwnerOrReadOnly
-from api.serializer import (FavoriteSerializer, IngredientSerializer,
+from api.serializer import (FavoriteSerializer, FollowCreateSerializer,
+                            FollowSerializer,
+                            IngredientSerializer,
                             RecipeCreateSerializer, RecipeReadSerializer,
-                            ShoppingCartSerializer, TagSerializer)
+                            ShoppingCartSerializer, TagSerializer,
+                            UserSerializer
+                            )
 from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
                             ShoppingCart, Tag)
-from .utils import to_pdf
+from users.models import Follow
+
+from api.utils import to_pdf
+
+User = get_user_model()
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -68,12 +78,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Метод для удаления."""
         user = request.user
         recipe = get_object_or_404(Recipe, id=pk)
-        if request.method == 'DELETE':
-            obj = model.objects.filter(user=user, recipe=recipe)
-            delete = obj.delete()
-            if delete[0] > 0:
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        obj = model.objects.filter(user=user, recipe=recipe)
+        delete = obj.delete()
+        if delete[0] > 0:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
     @action(
         detail=True,
@@ -142,3 +151,56 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (AllowAny,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = IngredientFilter
+
+
+class UserViewSet(UserViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    pagination_class = CustomPagination
+
+    def get_permissions(self):
+        if self.action == 'me':
+            return [IsAuthenticated()]
+        return super().get_permissions()
+
+    @action(
+        detail=False,
+        methods=['get'],
+        permission_classes=(IsAuthenticated,)
+    )
+    def subscriptions(self, request):
+        user = request.user
+        queryset = User.objects.filter(follow__user=user)
+        pages = self.paginate_queryset(queryset)
+        serializer = FollowSerializer(
+            pages, many=True, context={'request': request}
+        )
+        return self.get_paginated_response(serializer.data)
+
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        permission_classes=(IsAuthenticated,)
+    )
+    def subscribe(self, request, id):
+        user = request.user
+        author = get_object_or_404(User, id=id)
+        if request.method == 'POST':
+            data = {
+                'user': user.id,
+                'author': id
+            }
+            subscribe = FollowCreateSerializer(data=data)
+            subscribe.is_valid(raise_exception=True)
+            subscribe.save()
+            serializer = FollowSerializer(author)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        if request.method == 'DELETE':
+            deleted_count, _ = (
+                Follow.objects.filter(user=user, author=author).delete()
+            )
+            if deleted_count > 0:
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            else:
+                message = "Ошибка удаления подписки"
+                return Response(data={"message": message}, status=status.HTTP_204_NO_CONTENT)

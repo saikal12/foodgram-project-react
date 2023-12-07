@@ -2,10 +2,8 @@ from django.core.validators import (
     MinValueValidator, RegexValidator, MaxValueValidator
 )
 from django.db import models
+from django.conf import settings
 
-from foodgram.settings import (
-    NAME_MAX_LENGTH, SLUG_MAX_LENGTH, COLOR_MAX_LENGTH
-)
 from users.models import User
 
 
@@ -13,11 +11,11 @@ class Ingredient(models.Model):
     """Модель для описания ингредиента"""
     name = models.CharField(
         verbose_name='Название ингредиента',
-        max_length=NAME_MAX_LENGTH,
+        max_length=settings.NAME_MAX_LENGTH,
     )
     measurement_unit = models.CharField(
         verbose_name='Единицы измерения',
-        max_length=NAME_MAX_LENGTH,
+        max_length=settings.NAME_MAX_LENGTH,
     )
 
     class Meta:
@@ -39,17 +37,17 @@ class Tag(models.Model):
     """Модель для описания тега"""
     name = models.CharField(
         verbose_name='Название тега',
-        max_length=NAME_MAX_LENGTH,
+        max_length=settings.NAME_MAX_LENGTH,
         unique=True,
     )
     slug = models.SlugField(
         verbose_name='Уникальный слаг',
-        max_length=SLUG_MAX_LENGTH,
+        max_length=settings.SLUG_MAX_LENGTH,
         unique=True,
     )
     color = models.CharField(
         verbose_name='Цвет',
-        max_length=COLOR_MAX_LENGTH,
+        max_length=settings.COLOR_MAX_LENGTH,
         unique=True,
         validators=[
             RegexValidator(
@@ -78,7 +76,7 @@ class Recipe(models.Model):
     )
     name = models.CharField(
         verbose_name='Название рецепта',
-        max_length=NAME_MAX_LENGTH,
+        max_length=settings.NAME_MAX_LENGTH,
     )
     text = models.TextField(
         verbose_name='Описание рецепта',
@@ -138,11 +136,11 @@ class IngredientInRecipe(models.Model):
     amount = models.PositiveSmallIntegerField(
         validators=[
             MinValueValidator(
-                1,
+                settings.MIN_VALUE,
                 message='Минимальное количество 1!'
             ),
             MaxValueValidator(
-                32767,
+                settings.MAX_VALUE,
                 message='Максимальное значение 32767 минут!'
             )
         ],

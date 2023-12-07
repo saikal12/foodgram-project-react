@@ -1,9 +1,15 @@
+import logging
+
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import FilterSet, filters
 
 from recipes.models import Ingredient, Recipe, Tag
 
 User = get_user_model()
+
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.DEBUG)
 
 
 class IngredientFilter(FilterSet):
@@ -26,16 +32,22 @@ class RecipeFilter(FilterSet):
 
     class Meta:
         model = Recipe
-        fields = ('tags', 'author',)
+        fields = ('tags', 'author')
 
     def filter_is_favorited(self, queryset, name, value):
-        user = self.request.user
-        if value and not user.is_anonymous:
-            return queryset.filter(favorite__user=user)
-        return queryset
+        logging.debug('start filter_is_favorited')
+        user = self.request.user.id
+        if value:
+            logging.debug('filter for value')
+            return queryset.filter(favorite__user__pk=user)
+        else:
+            return queryset
 
     def filter_is_in_shopping_cart(self, queryset, name, value):
-        user = self.request.user
-        if value and not user.is_anonymous:
-            return queryset.filter(shoppingcart__user=user)
+        logging.debug('start filter_is_in_shopping_cart')
+        user = self.request.user.id
+        if value:
+            logging.debug('filter for value')
+            return queryset.filter(shoppingcart__user__pk=user)
         return queryset
+
