@@ -33,13 +33,16 @@ class UserSerializer(UserCreateSerializer):
                   'last_name', 'is_subscribed')
 
     def get_is_subscribed(self, author):
-        request = self.context['request']
-        return (
-            request
-            and request.user.is_authenticated
-            and Follow.objects.filter(
-                user=request.user, author=author
-            ).exists())
+        request = self.context.get('request')
+        if request is not None:
+            return (
+                request
+                and request.user.is_authenticated
+                and Follow.objects.filter(
+                    user=request.user,
+                    author=author).exists()
+            )
+        return False
 
 
 class TagSerializer(ModelSerializer):
@@ -168,7 +171,7 @@ class RecipeCreateSerializer(ModelSerializer):
                 recipe=recipe, ingredient=ingredient_obj, amount=amount_data
             )
             ingredient_create.append(new_ingredient)
-            IngredientInRecipe.objects.bulk_create(ingredient_create)
+        IngredientInRecipe.objects.bulk_create(ingredient_create)
 
     @transaction.atomic
     def create(self, validated_data):
@@ -236,13 +239,6 @@ class ShoppingCartSerializer(ModelSerializer):
         return ShortRecipeSerializer(instance.recipe).data
 
 
-class ShortRecipeSerializer(ModelSerializer):
-    """Дополнительный сериализатор для рецептов """
-    class Meta:
-        model = Recipe
-        fields = ('id', 'cooking_time', 'image', 'name',)
-
-
 class FollowSerializer(UserSerializer):
     recipes_count = serializers.SerializerMethodField(
         method_name='get_recipes_count'
@@ -255,13 +251,14 @@ class FollowSerializer(UserSerializer):
             'recipes_count', 'recipes'
         )
 
-    def get_recipes(self, obj):
+    def get_recipes(self, author):
         request = self.context.get('request')
-        limit = request.query_params.get('recipe_limit')
-        recipes = obj.recipes.all()
-        if request.GET.get('recipe_limit'):
-            recipes = recipes[:int(limit)]
-        return ShortRecipeSerializer(recipes, many=True).data
+        if request is not None:
+            limit = request.query_params.get('recipe_limit')
+            recipes = author.recipes.all()
+            if limit:
+                recipes = recipes[:int(limit)]
+            return ShortRecipeSerializer(recipes, many=True, ).data
 
     def get_recipes_count(self, obj):
         return obj.recipes.count()
@@ -287,3 +284,10 @@ class FollowCreateSerializer(ModelSerializer):
                 detail='Вы не можете подписаться на самого себя.'
             )
         return data
+
+
+class ShortRecipeSerializer(ModelSerializer):
+    """Дополнительный сериализатор для рецептов """
+    class Meta:
+        model = Recipe
+        fields = ('id', 'cooking_time', 'image', 'name')

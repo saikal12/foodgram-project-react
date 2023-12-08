@@ -9,9 +9,9 @@ FILE_NAME = 'shopping-list.txt'
 def to_pdf(ingredients):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename={FILE_NAME}'
-    pdfmetrics.registerFont(TTFont('DejaVu', 'DejaVuSans.ttf'))
+    pdfmetrics.registerFont(TTFont('Times New Roman', 'Times New Roman.ttf'))
     c = canvas.Canvas(response)
-    c.setFont('DejaVu', 17)
+    c.setFont('Times New Roman', 17)
     WIDTH = 60
     HEIGHT = 770
     c.drawString(WIDTH, HEIGHT, "  Ингредиенты: ")

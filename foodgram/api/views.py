@@ -193,7 +193,7 @@ class UserViewSet(UserViewSet):
             subscribe = FollowCreateSerializer(data=data)
             subscribe.is_valid(raise_exception=True)
             subscribe.save()
-            serializer = FollowSerializer(author)
+            serializer = FollowSerializer(author, context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
             deleted_count, _ = (
