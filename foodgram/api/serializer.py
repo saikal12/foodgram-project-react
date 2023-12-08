@@ -35,11 +35,11 @@ class UserSerializer(UserCreateSerializer):
     def get_is_subscribed(self, author):
         request = self.context['request']
         return (
-                request and
-                request.user.is_authenticated and
-                Follow.objects.filter(
-                    user=request.user, author=author
-                ).exists())
+            request
+            and request.user.is_authenticated
+            and Follow.objects.filter(
+                user=request.user, author=author
+            ).exists())
 
 
 class TagSerializer(ModelSerializer):

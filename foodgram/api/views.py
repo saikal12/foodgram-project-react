@@ -203,4 +203,5 @@ class UserViewSet(UserViewSet):
                 return Response(status=status.HTTP_204_NO_CONTENT)
             else:
                 message = "Ошибка удаления подписки"
-                return Response(data={"message": message}, status=status.HTTP_204_NO_CONTENT)
+                return Response(data={"message": message},
+                                status=status.HTTP_400_BAD_REQUEST)
