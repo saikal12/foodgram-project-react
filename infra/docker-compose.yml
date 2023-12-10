@@ -24,7 +24,6 @@ services:
       - foodgram_pg_data2:/var/lib/postgresql/data
 
 
-
   frontend:
     build: ../frontend/
     volumes:
