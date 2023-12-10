@@ -4,7 +4,7 @@ on:
   push:
     branches:
     #пока так
-      - main
+      - master
 
 jobs:
   tests:

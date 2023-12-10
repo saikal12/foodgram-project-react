@@ -3,8 +3,28 @@ from django.core.validators import (
 )
 from django.db import models
 from django.conf import settings
+from django.db.models import Exists, OuterRef
 
 from users.models import User
+
+
+class AnnotationsManager(models.Manager):
+    def add_annotations(self, user):
+        queryset = self.get_queryset().annotate(
+            is_favorited=Exists(
+                Favorite.objects.filter(
+                    user=user,
+                    recipe_id=OuterRef('id'))
+            ),
+            is_in_shopping_cart=Exists(
+                ShoppingCart.objects.filter(
+                    user=user,
+                    recipe_id=OuterRef('id')
+                )
+            )
+        )
+
+        return queryset
 
 
 class Ingredient(models.Model):
@@ -88,11 +108,11 @@ class Recipe(models.Model):
     cooking_time = models.PositiveSmallIntegerField(
         validators=[
             MinValueValidator(
-                1,
+                settings.MIN_VALUE,
                 message='Минимальное значение 1 минута!'
             ),
             MaxValueValidator(
-                32767,
+                settings.MAX_VALUE,
                 message='Максимальное значение 32767 минут!'
             )
         ],
@@ -109,6 +129,7 @@ class Recipe(models.Model):
         verbose_name='Список ингредиентов',
         related_name='recipes',
     )
+    objects = AnnotationsManager()
 
     class Meta:
         ordering = ('name',)
@@ -208,3 +229,4 @@ class ShoppingCart(BaseModel):
                 name='unique_shopping_cart'
             )
         ]
+

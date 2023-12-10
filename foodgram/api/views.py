@@ -18,11 +18,11 @@ from api.serializer import (FavoriteSerializer, FollowCreateSerializer,
                             ShoppingCartSerializer, TagSerializer,
                             UserSerializer
                             )
+from api.utils import to_pdf
 from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
                             ShoppingCart, Tag)
 from users.models import Follow
 
-from api.utils import to_pdf
 
 User = get_user_model()
 
@@ -40,20 +40,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         if user.is_authenticated:
-            queryset = queryset.annotate(
-                is_favorited=Exists(
-                    Favorite.objects.filter(
-                        user=user,
-                        recipe_id=OuterRef('id'))
-                ),
-                is_in_shopping_cart=Exists(
-                    ShoppingCart.objects.filter(
-                        user=user,
-                        recipe_id=OuterRef('id')
-                    )
-                )
-            )
-            return queryset
+            queryset = Recipe.objects.add_annotations(user)
         return queryset
 
     def get_serializer_class(self):
@@ -195,13 +182,11 @@ class UserViewSet(UserViewSet):
             subscribe.save()
             serializer = FollowSerializer(author, context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        if request.method == 'DELETE':
-            deleted_count, _ = (
-                Follow.objects.filter(user=user, author=author).delete()
-            )
-            if deleted_count > 0:
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            else:
-                message = "Ошибка удаления подписки"
-                return Response(data={"message": message},
-                                status=status.HTTP_400_BAD_REQUEST)
+        deleted_count, _ = (
+            Follow.objects.filter(user=user, author=author).delete()
+        )
+        if deleted_count > 0:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        message = "Ошибка удаления подписки"
+        return Response(data={"message": message},
+                        status=status.HTTP_400_BAD_REQUEST)

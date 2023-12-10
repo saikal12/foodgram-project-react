@@ -12,7 +12,7 @@ class User(AbstractUser):
     """Модель для пользователей foodgram"""
     username = models.CharField(
         verbose_name='Уникальный юзернейм',
-        max_length=150,
+        max_length=settings.NAME_MAX_LENGTH_USER,
         unique=True,
         validators=(username_validator,)
     )

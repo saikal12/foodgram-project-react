@@ -1,5 +1,6 @@
 import base64
 
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db import transaction
 from djoser.serializers import UserCreateSerializer
@@ -34,16 +35,13 @@ class UserSerializer(UserCreateSerializer):
 
     def get_is_subscribed(self, author):
         request = self.context.get('request')
-        if request is not None:
-            return (
-                request
-                and request.user.is_authenticated
-                and Follow.objects.filter(
-                    user=request.user,
-                    author=author).exists()
-            )
-        return False
-
+        return (
+            request
+            and request.user.is_authenticated
+            and Follow.objects.filter(
+                user=request.user,
+                author=author).exists()
+        )
 
 class TagSerializer(ModelSerializer):
     """Сериализатор для вывода тэгов."""
@@ -65,7 +63,7 @@ class IngredientInRecipeCreateSerializer(ModelSerializer):
         queryset=Ingredient.objects.all()
     )
     amount = serializers.IntegerField(
-        min_value=1, max_value=32767
+        min_value=settings.MIN_VALUE, max_value=settings.MAX_VALUE
     )
 
     class Meta:
@@ -254,11 +252,11 @@ class FollowSerializer(UserSerializer):
     def get_recipes(self, author):
         request = self.context.get('request')
         if request is not None:
-            limit = request.query_params.get('recipe_limit')
-            recipes = author.recipes.all()
-            if limit:
-                recipes = recipes[:int(limit)]
-            return ShortRecipeSerializer(recipes, many=True, ).data
+            limit = request.query_params.get('recipes_limit')
+        recipes = author.recipes.all()
+        if limit:
+            recipes = recipes[:int(limit)]
+        return ShortRecipeSerializer(recipes, many=True, ).data
 
     def get_recipes_count(self, obj):
         return obj.recipes.count()
