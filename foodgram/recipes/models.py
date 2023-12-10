@@ -229,4 +229,3 @@ class ShoppingCart(BaseModel):
                 name='unique_shopping_cart'
             )
         ]
-

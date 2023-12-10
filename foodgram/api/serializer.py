@@ -43,6 +43,7 @@ class UserSerializer(UserCreateSerializer):
                 author=author).exists()
         )
 
+
 class TagSerializer(ModelSerializer):
     """Сериализатор для вывода тэгов."""
     class Meta:
