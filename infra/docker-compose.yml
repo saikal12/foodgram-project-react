@@ -1,7 +1,7 @@
 version: '3.3'
 
 volumes:
-  foodgram_pg_data2:
+  foodgram_pg_data:
   static:
   media:
 
@@ -21,7 +21,7 @@ services:
     env_file: ../.env
 
     volumes:
-      - foodgram_pg_data2:/var/lib/postgresql/data
+      - foodgram_pg_data:/var/lib/postgresql/data
 
 
   frontend:
