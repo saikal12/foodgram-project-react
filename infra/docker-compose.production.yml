@@ -19,7 +19,7 @@ services:
     image: postgres:13.10
     env_file: ../.env
     volumes:
-      - foodgram_pg_data:/var/lib/postgresql/data
+      - foodgram_pg_data2:/var/lib/postgresql/data
 
 
 
