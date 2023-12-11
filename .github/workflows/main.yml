@@ -1,4 +1,4 @@
-name: Main Foodgram workflow
+name: Main foodgram workflow
 
 on:
   push:
@@ -98,7 +98,7 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
-          source: "infra/docker-compose.production.yml"
+          source: "docker-compose.production.yml"
           target: "foodgram"
       - name: Executing remote ssh commands to deploy
         uses: appleboy/ssh-action@master
@@ -107,6 +107,7 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          command_timeout: 200m
           script: |
             cd foodgram
             # Выполняет pull образов с Docker Hub
